@@ -19,4 +19,12 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
+app.get('/users', async function (req, res) {
+  console.log('Request users:', res.locals.requestId);
+  const titleContains = req.query.title_contains;
+  const users = await getAllUsers();
+  return res.json(users);
+});
+
+
 export default app;
