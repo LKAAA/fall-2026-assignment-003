@@ -1,9 +1,10 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { getAllTickets, createTicket, getTicketById, updateTicketStatus } from '../dal/tickets.js';
 
 const router = Router();
 
-router.get('/', async function (req, res) {
+router.get('/', async function (req: Request, res: Response, next: NextFunction) {
+  try {
     const { limit, offset, status } = req.query;
 
     const tickets = await getAllTickets({
@@ -13,38 +14,50 @@ router.get('/', async function (req, res) {
     });
 
     return res.json(tickets);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.get('/:id', async function (req, res) {
+router.get('/:id', async function (req: Request, res: Response, next: NextFunction) {
+  try {
     const { id } = req.params;
-    const ticketIdNum = +id;
+    const ticketIdNum = Number(id);
     if (Number.isNaN(ticketIdNum)) {
-        return res.status(400).json({ error: 'ticketIdNum must be a number'})
+      return res.status(400).json({ error: 'ticketIdNum must be a number' });
     }
 
     const ticket = await getTicketById(ticketIdNum);
     if (!ticket) {
-        return res.status(404).json({ error: 'ticket not found' });
+      return res.status(404).json({ error: 'ticket not found' });
     }
     return res.json(ticket);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post('/', async function(req, res) {
+router.post('/', async function (req: Request, res: Response, next: NextFunction) {
+  try {
     const { title, description } = req.body;
     if (!title || !description) {
-        return res.status(400).json({ error: 'Title and description are required'});
+      return res.status(400).json({ error: 'Title and description are required' });
     }
 
+    // res.locals.userId was set by authMiddleware
     const newTicket = await createTicket({
-        title,
-        description,
-        created_by: res.locals.userId,
+      title,
+      description,
+      creator_id: res.locals.userId,
     });
 
     return res.status(201).json(newTicket);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.patch('/:id/status', async function (req: Request, res: Response) {
+router.patch('/:id/status', async function (req: Request, res: Response, next: NextFunction) {
   try {
     const ticketIdNum = Number(req.params.id);
     if (Number.isNaN(ticketIdNum)) {
@@ -62,20 +75,9 @@ router.patch('/:id/status', async function (req: Request, res: Response) {
     }
 
     return res.json(updatedTicket);
-  } catch (error) {
-    console.error('Error updating ticket status:', error);
-    return res.status(500).json({ error: 'Failed to update ticket status' });
+  } catch (err) {
+    next(err);
   }
 });
-
-// TODO: Student implementation - Part 1: Ticket Routes
-// GET /tickets
-// GET /tickets/:id
-// POST /tickets
-// PATCH /tickets/:id/status
-
-// TODO: Student implementation - Part 2: Time Log Routes
-// POST /tickets/:id/time
-// GET /tickets/:id/time
 
 export default router;
