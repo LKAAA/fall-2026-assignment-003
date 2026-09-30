@@ -54,8 +54,8 @@ describe('Part 1: API Integration Tests', () => {
     it('should create and retrieve a ticket with valid auth header', async () => {
       const res = await request(app)
         .post('/tickets')
-        .set('X-User-Id', String(createdUserId))
         .send({
+          user_id: createdUserId,
           title: 'Important Ticket',
           description: 'Important ticket description about important things.'
         });
